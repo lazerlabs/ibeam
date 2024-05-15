@@ -75,14 +75,23 @@ def _wait_and_identify_trigger(targets: Targets,
     return trigger, target
 
 def handle_two_fa(two_fa_handler:TwoFaHandler, driver:webdriver.Chrome, strict_two_fa_code:bool) -> Optional[str]:
+    TFA_TIMEOUT = 60  # timeout in seconds
     _LOGGER.info(f'Attempting to acquire 2FA code from: {two_fa_handler}')
 
-    try:
-        two_fa_code = two_fa_handler.get_two_fa_code(driver)
-        if two_fa_code is not None:
-            two_fa_code = str(two_fa_code)  # in case someone returns an integer
-    except Exception as e:
-        _LOGGER.error(f'Error encountered while acquiring 2FA code. \nException:\n{exception_to_string(e)}')
+    start_time = time.time()
+    two_fa_code = None
+
+    while time.time() - start_time < TFA_TIMEOUT and two_fa_code is None:
+        try:
+            two_fa_code = two_fa_handler.get_two_fa_code(driver)
+            if two_fa_code is not None:
+                two_fa_code = str(two_fa_code)  # in case someone returns an integer
+        except Exception as e:
+            _LOGGER.error(f'Error encountered while acquiring 2FA code. \nException:\n{exception_to_string(e)}')
+            return None
+
+    if two_fa_code is None:
+        _LOGGER.error(f'Timeout reached while acquiring 2FA code.')
         return None
 
     _LOGGER.debug(f'2FA code returned: {two_fa_code}')
