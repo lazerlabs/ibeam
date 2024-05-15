@@ -22,6 +22,9 @@ class HttpCallbackTwoFaHandler(TwoFaHandler):
         self.security_code = None
         self.expiration_time = None
         self.duration = _HTTP_CALLBACK_DURATION
+        self.port = _HTTP_CALLBACK_PORT
+        self.host = "0.0.0.0"
+
         super().__init__(*args, **kwargs)
 
         self.app = Flask(__name__)
@@ -37,7 +40,7 @@ class HttpCallbackTwoFaHandler(TwoFaHandler):
         _LOGGER.info(f"HttpCallbackTwoFaHandler started on {self.app.url_map}")
 
     def run_app(self):
-        self.app.run(host='0.0.0.0', port=_HTTP_CALLBACK_PORT, use_reloader=False)
+        self.app.run(host=self.host, port=self.port, use_reloader=False)
 
     def receive_security_code(self):
         self.security_code = request.form.get('code')
@@ -45,7 +48,7 @@ class HttpCallbackTwoFaHandler(TwoFaHandler):
         _LOGGER.info(f"Received security code: {self.security_code}")
         return "", 204
 
-    def get_two_fa_code(self, driver) -> Optional[str]:
+    def get_two_fa_code(self, _) -> Optional[str]:
         if self.expiration_time is not None and time.time() < self.expiration_time:
             _LOGGER.info(f"Returning security code: {self.security_code}")
             return self.security_code
@@ -54,3 +57,7 @@ class HttpCallbackTwoFaHandler(TwoFaHandler):
             self.security_code = None
             self.expiration_time = None
             return None
+        
+    def __str__(self):
+        return f"HttpCallbackTwoFaHandler(host={self.host}, port={self.port}, url={self.app.url_map}, duration={self.duration}, params={self.params})"
+
