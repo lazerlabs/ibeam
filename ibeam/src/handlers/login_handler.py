@@ -121,6 +121,7 @@ class LoginHandler():
                  min_presubmit_buffer: int,
                  max_failed_auth: int,
                  outputs_dir: str,
+                 max_total_attempts: int,
                  ):
 
         self.secrets_handler = secrets_handler
@@ -138,8 +139,9 @@ class LoginHandler():
         self.min_presubmit_buffer = min_presubmit_buffer
         self.max_failed_auth = max_failed_auth
         self.outputs_dir = outputs_dir
-
+        self.max_total_attempts = max_total_attempts
         self.failed_attempts = 0
+        self.total_attempts = 0
         self.presubmit_buffer = self.min_presubmit_buffer
 
     def step_login(self,
@@ -158,6 +160,11 @@ class LoginHandler():
 
         if password is None:
             _LOGGER.error(f'Password cannot be None. Specify by setting IBEAM_PASSWORD environment variable.')
+            raise AttemptException(cause='shutdown')
+
+        self.total_attempts += 1
+        if self.total_attempts >= self.max_total_attempts:
+            _LOGGER.critical(f'######## ATTENTION! ######## Maximum number of authentication attempts (IBEAM_MAX_TOTAL_ATTEMPTS={self.max_total_attempts}) reached. IBeam will shut down to prevent an account lock-out. It is recommended you attempt to authenticate manually in order to reset the counter. Read the execution logs and report issues at https://github.com/Voyz/ibeam/issues')
             raise AttemptException(cause='shutdown')
 
         # input credentials

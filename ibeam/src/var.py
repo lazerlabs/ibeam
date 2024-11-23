@@ -9,6 +9,9 @@ def to_bool(value):
     return bool(strtobool(str(value)))
 
 
+MAX_TOTAL_ATTEMPTS = int(os.environ.get('IBEAM_MAX_TOTAL_ATTEMPTS', 10))
+"""Maximum number of authentication attempts."""
+
 INPUTS_DIR = os.environ.get('IBEAM_INPUTS_DIR', '/srv/inputs/')
 """Directory path of Inputs Directory."""
 
